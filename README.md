@@ -101,3 +101,40 @@
           + path() 인수 : name
             * URL에 이름을 지으면, 템플릿을 포함한 Django 어디에서나 명확하게 참조 가능
             * 이 기능 이용해 하나의 파일만 수정해도 프로젝트 내의 모든 URL 패턴을 바꿀 수 있도록 도와줌.
+            
+<hr/>
+
+
+## part2
+  1. 데이터베이스 설치
+      - `mysite/settings.py` Django 설정을 모듈 변수로 표현한 보통의 Python 모듈
+      - 기본적으로 SQLite를 사용하도록 구성
+      - MySQL 사용하고 싶을 때
+        + 데이터베이스 바인딩(mysqlclient) 설치 - windows
+          * 발생했던 에러 1
+            - `error: Microsoft Visual C++ 14.0 is required. Get it with "Microsoft Visual C++ Build Tools": http://landinghub.visualstudio.com/visual-cpp-build-tools`
+            - 해결 방법 : Visual C++ Build tools 2015 download
+            - 참고 링크 : https://nologout.blog.me/221440309296
+          * 발생했던 에러 1
+            - `_mysql.c(42) : fatal error C1083: Cannot open include file: 'config-win.h': No such file or directory`<>
+            - 해결 방법 : `pip install wheel` `pip install mysqlclient-1.4.4-cp37-cp37m-win32.whl` #깔려있는 Python이 3.7에 32bit라서 cp37, win32로 다운로드
+            - 참고 링크 : https://stackoverflow.com/questions/26866147/mysql-python-install-error-cannot-open-include-file-config-win-h
+        + 데이터베이스 연결 설정과 맞게 DATABASES 'default' 값 변경
+          * `settings.py`에서 다음과 같이 설정
+              ```
+                DATABASES = {
+                  'default': {
+                  'ENGINE': 'django.db.backends.mysql',
+                    'NAME': schema 이름, #mysql에 schema 생성 후 쓰기
+                    'HOST': 'localhost',
+                    'PORT': '3306',
+                    'USER': 사용자 이름,
+                    'PASSWORD': 비밀번호
+                  }
+                }
+                
+                TIME_ZONE = 'Asia/Seoul'
+              ```
+        + `...\> py manage.py migrate` #DB 설정과 app과 함께 제공되는 데이터베이스 migration에 따라 필요한 DB 테이블 생성
+        + 확인하고 싶다면 설정한 schema 들어가서 `show tables;`
+
