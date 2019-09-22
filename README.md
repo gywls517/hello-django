@@ -137,4 +137,12 @@
               ```
         + `...\> py manage.py migrate` #DB 설정과 app과 함께 제공되는 데이터베이스 migration에 따라 필요한 DB 테이블 생성
         + 확인하고 싶다면 설정한 schema 들어가서 `show tables;`
+        + `mysite/admin.py` 다음과 같이 수정
+          '''
+            from django.contrib import admin
 
+            from .models import Question, Choice
+
+            admin.site.register(Question)
+            admin.site.register(Choice)
+          '''
