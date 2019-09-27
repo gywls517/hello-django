@@ -803,16 +803,6 @@
       - 버그 식별하기
         + 현재 Question의 pub_date 필드가 미래로 설정되어 있을 때에도 Question.was_published_recently() True 반환.
         + `...\> py manage.py shell` shell 통해 버그 확인
-        ```
-        >>> import datetime
-        >>> from django.utils import timezone
-        >>> from polls.models import Question
-        >>> # create a Question instance with pub_date 30 days in the future
-        >>> future_question = Question(pub_date=timezone.now() + datetime.timedelta(days=30))
-        >>> # was it published recently?
-        >>> future_question.was_published_recently()
-        True
-        ```
 
       - 버그 노출하는 테스트 만들기
         + 어플리케이션 테스트는 일반적으로 text.py 파일에 있음.
@@ -870,9 +860,6 @@
           ```
       + `...\> py manage.py test polls` #테스트 재실행, 버그 해결
 
-      - 보다 포괄적인 테스트
-      - 뷰 테스트
-
       - 장고 테스트 클라이언트
         + test.py 또는 shell에서 사용 가능
         + shell : text.py에서 필요하지 않았던 두 가지 일 해야 함
@@ -882,6 +869,7 @@
           >>> from django.test.utils import setup_test_environment
           >>> setup_test_environment()
           ```
+        + setup_test_environment() 사용한 렌더러 설치 - response.context와 같은 response의 추가적인 속성 사용
         + 2. 테스트 클라이언트 클래스 import
           ```
           >>> from django.test import Client
@@ -904,3 +892,108 @@
               ).order_by('-pub_date')[:5]
           ```
         + Question.objects.filter (pub_date__lte = timezone.now ())는 timezone.now보다 pub_date가 작거나 같은 Question을 포함하는 queryset을 반환
+
+  ## part6
+      - 정적 파일(이미지, Javascript, CSS...)
+
+  1. 앱의 모양과 느낌을 원하는 대로 바꿔보세요.
+      - polls/static/polls 생성
+      - 그 안에 style.css 생성
+      - style.css 선언
+        ```
+        {% load static %}
+
+        <link rel="stylesheet" type="text/css" href="{% static 'polls/style.css' %}">
+        ```
+      - {% static %} 템플릿 태그는 정적 파일의 절대 URL을 생성.
+
+  2. 배경 이미지 추가하기
+        - polls/static/polls 안에 images 디렉토리 생성
+        - 이미지 넣기
+        - 스타일시트에 추가
+        ```
+        body {
+            background: white url("images/background.gif") no-repeat;
+        }
+        ```
+
+  ## part7
+  1. 관리자 폼 커스터마이징
+      - `polls/admin.py` admin.site.register(Question) 줄 다음과 같이 수정
+      ```
+      from django.contrib import admin
+
+      from .models import Question
+
+
+      class QuestionAdmin(admin.ModelAdmin):
+          fields = ['pub_date', 'question_text']
+
+      admin.site.register(Question, QuestionAdmin)
+      ```
+      - 모델 관리자 옵션을 변경해야 할 때마다 모델 어드민 클래스를 만든 후 admin.site.register()에 두 번째 인수로 전달
+      - 발행일이 설문 필드 앞쪽으로 옴.
+
+      - 수십 개의 필드가 있는 폼에 관해서는 폼을 fieldset으로 분할하는 게 좋음.
+      - `polls/admin.py`
+      ```
+      from django.contrib import admin
+
+      from .models import Question
+
+
+      class QuestionAdmin(admin.ModelAdmin):
+          fieldsets = [
+              (None,               {'fields': ['question_text']}),
+              ('Date information', {'fields': ['pub_date']}),
+          ]
+
+      admin.site.register(Question, QuestionAdmin)
+      ```
+      - 튜플의 첫 번째 요소 : fieldset의 제목
+
+  2. 관련된 객체 추가
+        - Question이 여러 개의 Choice 가지고 있었는데도 표시 안 했었음
+        - 해결 방법 1 : 관리자에 Choice 등록
+        - `polls/admin.py`
+        ```
+        from django.contrib import admin
+
+        from .models import Choice, Question
+        # ...
+        admin.site.register(Choice)
+        ```
+        - Question 필드가 select box로 되어있음 : Django는 ForeignKey가 admin에서 select로 표현되어야 함 앎.
+
+        - Question 객체 생성할 때 여러 개의 Choices 직접 추가하는 방법
+        - choice 모델에 대한 register() 제거, Question 코드 편집
+        - `polls/admin.py`
+        ```
+        from django.contrib import admin
+
+        from .models import Choice, Question
+
+
+        class ChoiceInline(admin.StackedInline):
+            model = Choice
+            extra = 3
+
+
+        class QuestionAdmin(admin.ModelAdmin):
+            fieldsets = [
+                (None,               {'fields': ['question_text']}),
+                ('Date information', {'fields': ['pub_date'], 'classes': ['collapse']}),
+            ]
+            inlines = [ChoiceInline]
+
+        admin.site.register(Question, QuestionAdmin)
+        ```
+        - choice 객체는 Question 관리자 페이지에서 편집됨, 기본적으로 3가지 선택항목 제공함.
+
+        - inline 관련 객체를 표시하는 표 형식의 방법 : StackedInLine 대신에 TabularInline 사용
+        - `polls/admin.py`
+        ```
+        class ChoiceInline(admin.TabularInline):
+            #...
+        ```
+        
